@@ -1,7 +1,10 @@
 {
   "dependencies": {
+    "@koa/cors": "^2.2.2",
+    "@types/koa-cors": "^0.0.0",
     "koa": "^2.5.3",
     "koa-bodyparser": "^4.2.1",
+    "koa-logger": "^3.2.0",
     "koa-router": "^7.4.0",
     "koa-session": "^5.9.0"
   },

@@ -5,8 +5,20 @@ var Router = require('koa-router');
 var bodyParser = require('koa-bodyparser');
 // Middleware for having persistent sessions across requests
 var session = require('koa-session');
+// Allow for cross-origin request sharing
+var cors = require('@koa/cors');
+// Add nice logging
+var logging = require('koa-logger');
 
 var app = new Koa();
+app.use(logging());
+
+// Register body parsing middleware
+app.use(bodyParser());
+// Register CORS middleware
+app.use(cors());
+// Register session middleware
+app.use(session(app));
 
 // Create key for cookies
 app.keys = ['some secret hurr'];
@@ -18,13 +30,7 @@ var router = new Router();
 // Create object to store the accounts
 var accounts = {};
 
-// Register session middleware
-app.use(session(app));
-// Register body parsing middleware
-app.use(bodyParser());
-
 app.use(async (ctx, next) => {
-  console.log("Ensuring JSON integrity.");
   user = ctx.session.user
 
   if(user) {
@@ -47,9 +53,13 @@ app.use(async (ctx, next) => {
   await next();
 });
 
+router.get('/', (ctx, next) => {
+  ctx.body = "Hello world!"
+});
+
+
 // Listen for POST request at /signup/
 router.post('/signup/', (ctx, next) => {
-  console.log("Signing up user");
   request_body = ctx.request.body
   username = request_body["username"]
   password = request_body["password"]
@@ -63,7 +73,6 @@ router.post('/signup/', (ctx, next) => {
 });
 
 router.post('/login/', (ctx, next) => {
-  console.log("Logging in user");
   request_body = ctx.request.body
   username = request_body["username"]
   submitted_password = request_body["password"]
