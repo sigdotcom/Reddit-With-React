@@ -21,6 +21,18 @@ data on disk that persists even when the computer hosting the database restarts.
 1. [Setting up the Project](#setting-up-the-project)
 2. [Baby Steps with Koa](#baby-steps-with-koa)
     1. [What is KoaJS](#what-is-koajs)
+    2. [Installation](#installation)
+    3. [The Application](#the-application)
+        1. [Example](#example)
+    4. [Middleware](#middleware)
+        1. [Example](#example-1)
+    5. [Context](#context)
+    6. [Async/Await](#asyncawait)
+3. [React with Reddit Backend](#react-with-reddit-backend)
+    1. [Router](#router)
+    2. [Signup Route](#signup-route)
+    3. [Login Route](#login-route)
+    4. [Disclaimer](#disclaimer)
 
 ## Setting up the Project
 1. Make sure you have the
