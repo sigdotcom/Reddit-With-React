@@ -75,7 +75,7 @@ cd <path_to_folder>
 ```
 3. Install the necessary packages
 ```bash
-yarn add koa koa-router koa-bodyparser koa-session koa-cors koa-logger
+yarn add koa koa-router koa-bodyparser koa-session koa-cors koa-logger @koa/cors
 ```
 4. Install necessary development dependencies
 ```bash
