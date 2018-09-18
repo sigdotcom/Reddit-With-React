@@ -95,7 +95,7 @@ documentation:
 #### Example
 To demonstrate the basics of the application, an obligatory Hello World example.
 
-Create `app.js` an paste the following code:
+Create `app.js` and paste the following code:
 ```javascript
 // Import the koa library and store the residual module object in the Koa
 // variable. This will be used to instantiate the actual Koa object that handles
@@ -126,10 +126,10 @@ Navigate to `<url>` in your web browser and you should see "Hello World".
 
 ## Middleware
 Koa's powerful infrastructure and ecosystem comes from middleware. Middleware
-are asynchronous functions with a stack-like control flow. The middleware flow
-is actions are executed downstream and then the control flow returns upstream.
-Essentially, that means that functions are called in order of registering and
-when they return, they return execution to the middleware above it. An example:
+are asynchronous functions with a stack-like control flow. In middleware control
+flow actions are executed downstream and then the control flow returns upstream.
+Functions are called in order of when they were registered. On returning from
+the function, execution is returned to the middleware above it. An example:
 
 ### Example
 ```javascript
@@ -176,8 +176,7 @@ craft a response to the request. The documentation for the Context, Request, and
 Response APIs can be found on the [official documentation](https://koajs.com/).
 
 ### Async/Await
-Koa is built upon the JavaScript concept of async/await. There is a lot of
-context required to understand async/await. A good tutorial on the matter can be
+Koa is built upon the JavaScript concept of async/await. A good tutorial can be
 found [here](https://javascript.info/async).
 
 ## React with Reddit Backend
@@ -250,6 +249,8 @@ var Koa = require('koa');
 var Router = require('koa-router');
 // Collect middleware for automaticall parsing the body of the request
 var bodyParser = require('koa-bodyparser');
+// Allow for cross-origin request sharing
+var cors = require('@koa/cors');
 
 var app = new Koa();
 // Create a new Router that will build the Koa middleware for you to manage the
@@ -261,6 +262,7 @@ var accounts = {};
 
 // Register body parsing middleware
 app.use(bodyParser());
+app.use(cors());
 
 // Listen for POST request at /signup/
 router.post('/signup/', (ctx, next) => {
@@ -455,6 +457,6 @@ print(response.content)
 ### Disclaimer
 **DO NOT** use this code for any production login mechanism. Any login you
 implement should use the [salted password
-hashing](#https://crackstation.net/hashing-security.htm) to prevent your
-database passwords from being leaked. Moreover, you should probably just use a
-well vetted library.
+hashing](https://crackstation.net/hashing-security.htm) to prevent your database
+passwords from being leaked. Moreover, you should probably just use a well
+vetted library.
