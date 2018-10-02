@@ -33,6 +33,10 @@ data on disk that persists even when the computer hosting the database restarts.
     2. [Signup Route](#signup-route)
     3. [Login Route](#login-route)
     4. [Disclaimer](#disclaimer)
+4. [TypeScript](#typescript)
+5. [Databases](#databases)
+	1. [Object-relational mapping (ORM)](#object-relational-mapping-orm)
+6. [TypeScript with Koa](#typescript-with-koa)
 
 ## Setting up the Project
 1. Make sure you have the
@@ -460,3 +464,312 @@ implement should use the [salted password
 hashing](https://crackstation.net/hashing-security.htm) to prevent your database
 passwords from being leaked. Moreover, you should probably just use a well
 vetted library.
+
+## TypeScript
+Now that you have some grasp of the concepts, I will introduce you to a "new
+language" [TypeScript](https://www.typescriptlang.org/index.html) that SIGWEB
+writes the backend in. TypeScript is a "typed superset of JavaScript that
+compiles to plain JavaScript". To break that down, **typed** implies that it
+adds strongly-typed components to JavaScript (think of c++); **superset** means
+that it adds features not native to JavaScript to make things syntactically and
+semantically nicer, but supports the plain JavaScript features; and compiles
+(more specifically
+[transpiles](https://en.wikipedia.org/wiki/Source-to-source_compiler)) back into
+JavaScript when finished. These features allow TypeScript to scale to larger
+codebases that have high maintenance costs with interpreted languages. Some more
+information can be found
+[here](https://blogs.msdn.microsoft.com/somasegar/2012/10/01/typescript-javascript-development-at-application-scale/).
+
+The majority of the language specification can be found [in their
+handbook](https://www.typescriptlang.org/docs/handbook/basic-types.html). A few
+sections to highlight:
+1. [TypeScript in 5
+   minutes](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html):
+   Quick introduction to the basic language concepts and compiling of
+   TypeScript.
+2. [Basic Types](https://www.typescriptlang.org/docs/handbook/basic-types.html)
+3. [Variable Declarations](https://www.typescriptlang.org/docs/handbook/variable-declarations.html)
+4. [Functions](https://www.typescriptlang.org/docs/handbook/functions.html)
+5. [Modules](https://www.typescriptlang.org/docs/handbook/modules.html)
+
+## Databases
+The main problem with the previous signup/login implementation was that whenever
+the server turns off the data is removed and cannot be recovered. The specific
+database implementation I will be referring to is
+[PostgreSQL](https://www.postgresql.org/). Databases provide an organized
+collection of related data that (in most cases) is stored on disk. In this case,
+whenever the server is turned off, you simply reconnect to the database and have
+access to the exact same data. More information about databases can be found
+[here](https://www.ucl.ac.uk/archaeology/cisp/database/manual/node1.html#SECTION00120000000000000000).
+
+### Object-relational mapping (ORM)
+The primary way that a user collects data from the database is through SQL
+queries. SQL or Structured Query Language is a domain-specific language for
+managing data in a relational database management system (RDBMS) such as
+PostgreSQL. ORMs abstract SQL to objects within the language and perform
+deserialization of data from the database making interacting with the database
+much more seamless. An example:
++ Assume that the database is already set up. We want to add a user (username
+  and password) to the database. Then, select all users from the database.
+    - **sql**
+        ```typescript
+        cosnt pgp = require('pg-promise')();
+		const db = pgp('postgres://postgres@localhost:5432/example');
+
+		db.none("insert into Users (username, password) values (${name}, ${password})', {
+			name: 'ksyh3',
+			password: 'password'
+		});
+
+		const users = await db.any("Select * FROM users");
+        ```
+    - **ORM**
+        ```typescript
+        const user = new User();
+        user.username = "ksyh3"
+        user.password = "password";
+        await user.save()
+
+        const users = awit Users.find();
+        ```
+There are many pros and cons to using an ORM vs raw SQL queries. If you are
+interested, discussion of this can be found
+[here](https://medium.com/@mithunsasidharan/should-i-or-should-i-not-use-orm-4c3742a639ce),
+[here](https://stackoverflow.com/questions/4667906/the-advantages-and-disadvantages-of-using-orm),
+or by googling "ORM vs raw sql".
+
+## TypeScript with Koa
+Now we will set up the Reddit with React backend with Typescript.
+
+### Installation
+1. Create a directory containing all of the backend code
+
+    ```bash
+    # linux
+    mkdir -p <path_to_folder>
+    # windows
+    mkdir <path_to_folder>
+    ```
+2. Navigate to the directory
+
+    ```bash
+    # linux + windows
+    cd <path_to_folder>
+    ```
+3. Install the necessary packages
+
+    ```bash
+    yarn add koa koa-router koa-bodyparser koa-session koa-cors koa-logger @koa/cors typeorm pg
+    ```
+4. Install necessary development dependencies
+
+    ```bash
+    yarn add --dev @types/koa @types/koa-router @types/koa-bodyparser @types/koa-session @types/koa-cors ts-node tslint typescript
+    ```
+5. Create `tsconfig.json` with the following text:
+
+    ```
+    {
+       "compilerOptions": {
+          "lib": [
+             "es2017",
+             "dom"
+          ],
+          "target": "es2017",
+          "module": "commonjs",
+          "moduleResolution": "node",
+          "outDir": "./build",
+          "emitDecoratorMetadata": true,
+          "experimentalDecorators": true,
+          "sourceMap": true
+       },
+       "exclude": [
+           "node_modules"
+        ]
+    }
+    ```
+6. Create ``ormconfig.js`` with the following content:
+    
+    ```
+    const ROOT_DIR = "./"
+    const EXT = ".ts"
+
+    module.exports = {
+       "type": "postgres",
+       "host": process.env.DB_HOST || "localhost",
+       "username": process.env.DB_USERNAME || "postgres",
+       "password": process.env.DB_PASSWORD || "",
+       "database": process.env.DB_TABLE || "pheonix",
+       "port": process.env.DB_PORT || 5432,
+       "synchronize": true,
+       "logging": true,
+       "entities": [
+          ROOT_DIR + "entity/**/*" + EXT
+       ],
+       "migrations": [
+          ROOT_DIR + "migration/**/*" + EXT
+       ],
+       "subscribers": [
+          ROOT_DIR + "subscriber/**/*" + EXT
+       ],
+       "cli": {
+          "entitiesDir": ROOT_DIR + "entity",
+          "migrationsDir": ROOT_DIR + "migration",
+          "subscribersDir": ROOT_DIR + "subscriber"
+       }
+    }
+    ```
+7. Create ``app.ts`` with the following content:
+
+    ```typescript
+    import * as cors from "@koa/cors";
+    import * as Koa from "koa";
+    import * as koaBody from "koa-bodyparser";
+    import * as logger from "koa-logger";
+    import * as session from "koa-session";
+
+    import { createConnection } from "typeorm";
+
+    export const app = new Koa();
+
+    app.keys = ['put secret key here'];
+
+    app.use(koaBody());
+    app.use(cors());
+    app.use(logger());
+    app.use(session(app));
+
+    app.use(async (ctx: Koa.Context, next: Function) => {
+      ctx.body = "Hello World!"
+    });
+
+
+    if (!module.parent) {
+      createConnection().then(async connection => {
+        const port: number = 5000
+        const host: string = "localhost"
+        const NODE_ENV: string = "development"
+        const server = app.listen(port, host, () => {
+          console.log(
+            `Server is listening on ${host}:${port} (${NODE_ENV})`
+          );
+        });
+      }).catch(error => console.log("TypeORM connection error: ", error));
+    }
+    ```
+8. Ensure that you have [docker](https://docs.docker.com/install/) installed.
+9. Start the PostgreSQL server on docker:
+
+    ```bash
+    docker run -p 5432:5432 --name postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=pheonix postgres
+    ```
+10. Run the following command to ensure that everything is working properly
+
+    ```bash
+    >>> yarn ts-node app.ts
+    Server is listening on localhost:5000 (development)  # <-- You should see
+    ```
+
+### Entities
+Both the database and the backend server are setup, but we aren't storing
+anything in the database. ``createConnection()`` only creates a connection to
+the database, but we need to provide the database a schema to store. This is
+where entities, also referred to as Models, come in.
+
+Think of entities as an class-based representation of a table within the
+database. The [TypeORM entity
+documentation](http://typeorm.io/#/entities/what-is-entity) provides a good
+intuition behind entities.
+
+Follow the below steps to create an entity to store the Reddit with React user:
+1. Create the `Account` entity:
+    
+    ```bash
+    >>> yarn typeorm entity:create -n Account
+    ```
+2. Paste the following code into `entity/Account.ts` (User is a reserved keyword
+   in PostgreSQL so we must use `Account`):
+
+    ```typescript
+    import {Entity, PrimaryColumn, Column} from "typeorm";
+
+    @Entity()
+    export class Account {
+        @PrimaryColumn()
+        username: string;
+
+        @Column()
+        password: string;
+    }
+    ```
+3. Restart the Reddit with React backend server:
+    
+    ```bash
+    # Make sure to ctrl-c the previous running app.ts
+    >>> yarn ts-node app.ts
+    ```
+
+Now, when the server starts we will make a connection the database and create
+the ``Account`` table within the database. The next step is creating users on
+sign-up.
+
+### Sign-up V2
+```typescript
+import * as cors from "@koa/cors";
+import * as Koa from "koa";
+import * as koaBody from "koa-bodyparser";
+import * as logger from "koa-logger";
+import * as session from "koa-session";
+import * as Router from "koa-router";
+
+import { Account } from "./entity/Account";
+
+import { createConnection } from "typeorm";
+
+export const app = new Koa();
+
+const router = new Router();
+
+app.keys = ['put secret key here'];
+
+app.use(koaBody());
+app.use(cors());
+app.use(logger());
+app.use(session(app));
+
+router.get('/', async (ctx, next) => {
+  ctx.body = "Hello World";
+});
+
+// Listen for POST request at /signup/
+router.post('/signup/', async (ctx, next) => {
+  let request_body = ctx.request.body
+  let user = new Account();
+  user.username = request_body["username"]
+  user.password = request_body["password"]
+  try {
+    await user.save();
+  } catch(e) {
+    ctx.throw(400, e);
+  }
+
+  ctx.body = request_body
+});
+
+app
+  .use(router.routes())
+  .use(router.allowedMethods());
+
+if (!module.parent) {
+  createConnection().then(async connection => {
+    const port: number = 5000
+    const host: string = "localhost"
+    const NODE_ENV: string = "development"
+    const server = app.listen(port, host, () => {
+      console.log(
+        `Server is listening on ${host}:${port} (${NODE_ENV})`
+      );
+    });
+  }).catch(error => console.log("TypeORM connection error: ", error));
+}
+```
