@@ -19,6 +19,7 @@ data on disk that persists even when the computer hosting the database restarts.
 
 ## Table of Contents
 1. [Setting up the Project](#setting-up-the-project)
+    1. [REST Clients](#rest-clients)
 2. [Baby Steps with Koa](#baby-steps-with-koa)
     1. [What is KoaJS](#what-is-koajs)
     2. [Installation](#installation)
@@ -37,6 +38,10 @@ data on disk that persists even when the computer hosting the database restarts.
 5. [Databases](#databases)
 	1. [Object-relational mapping (ORM)](#object-relational-mapping-orm)
 6. [TypeScript with Koa](#typescript-with-koa)
+    1. [Installation](#installation-1)
+    2. [Entities](#entities)
+    3. [Sign-up V2](#sign-up-v2)
+    4. [Login V2](#login-v2)
 
 ## Setting up the Project
 1. Make sure you have the
@@ -47,6 +52,17 @@ data on disk that persists even when the computer hosting the database restarts.
    step, replace all subsequent yarn commands with their npm equivalents.
 3. Download [docker](https://www.docker.com/). A more in-depth discussion of
    what docker is will occur in a later section. Just trust for now.
+### REST Clients
+Throughout this tutorial, I will be making reference to "making a GET/POST
+request" which is normally difficult to do on Windows. There are GUI REST
+clients that will make testing of the API and visualizing what is going on much
+easier. I will recommend:
+1. [Postman](https://www.getpostman.com/)
+2. [Insomnia](https://insomnia.rest/)
+
+I will **NOT** be teaching you how to use them or make reference to them;
+however, I would recommend looking into them. Pick whichever you think looks and
+feels the best for you. Try both before you settle for one.
 
 ## Baby Steps with Koa
 ### What is KoaJS
@@ -714,6 +730,7 @@ the ``Account`` table within the database. The next step is creating users on
 sign-up.
 
 ### Sign-up V2
+To implement the new sign-up system, paste the following code into `app.ts`.
 ```typescript
 import * as cors from "@koa/cors";
 import * as Koa from "koa";
@@ -744,16 +761,23 @@ router.get('/', async (ctx, next) => {
 // Listen for POST request at /signup/
 router.post('/signup/', async (ctx, next) => {
   let request_body = ctx.request.body
-  let user = new Account();
-  user.username = request_body["username"]
-  user.password = request_body["password"]
-  try {
-    await user.save();
-  } catch(e) {
-    ctx.throw(400, e);
-  }
+  const found_account = await Account.findOne(
+    {username: request_body["username"], password: request_body["password"]}
+  );
+  if (found_account) {
+    ctx.body = "Account already exists";
+  } else {
+    let user = new Account();
+    user.username = request_body["username"]
+    user.password = request_body["password"]
+    try {
+      const result = await user.save();
+    } catch(e) {
+      return ctx.throw(400, e);
+    }
 
-  ctx.body = request_body
+    ctx.body = request_body
+  }
 });
 
 app
@@ -773,3 +797,126 @@ if (!module.parent) {
   }).catch(error => console.log("TypeORM connection error: ", error));
 }
 ```
+
+Start the server using the following command:
+```bash
+>>> yarn ts-node app.ts
+```
+
+Whenever the user makes a `POST` to `/signup/` the route will perform the
+following functions:
+1. Ensure that the account does not already exists (`Account.findOne`). If
+   so, warn the user.
+2. If the account does not exist, create an `Account` and save it to the
+   database. Return the original request back to the user.
+
+### Login V2
+To implement the login + sign-up system, paste the following code into `app.ts`
+(overwriting the contents).
+
+```typescript
+import * as cors from "@koa/cors";
+import * as Koa from "koa";
+import * as koaBody from "koa-bodyparser";
+import * as logger from "koa-logger";
+import * as session from "koa-session";
+import * as Router from "koa-router";
+
+import { Account } from "./entity/Account";
+
+import { createConnection } from "typeorm";
+
+export const app = new Koa();
+
+const router = new Router();
+
+app.keys = ['put secret key here'];
+
+app.use(koaBody());
+app.use(cors());
+app.use(logger());
+app.use(session(app));
+
+router.get('/', async (ctx, next) => {
+  ctx.body = "Hello World";
+});
+
+// Listen for POST request at /signup/
+router.post('/signup/', async (ctx, next) => {
+  let request_body = ctx.request.body
+  const found_account = await Account.findOne(
+    {username: request_body["username"], password: request_body["password"]}
+  );
+  console.log(found_account);
+  if (found_account) {
+    ctx.body = "Account already exists";
+  } else {
+    let user = new Account();
+    user.username = request_body["username"]
+    user.password = request_body["password"]
+    try {
+      const result = await user.save();
+    } catch(e) {
+      return ctx.throw(400, e);
+    }
+
+    ctx.body = request_body
+  }
+});
+
+// Listen for POST request at /login/
+router.post('/login/', async (ctx, next) => {
+  let request_body = ctx.request.body
+  // Check if the user has been previously logged in
+  if(ctx.session.user) {
+    ctx.body = `Welcome back ${ctx.session.user.username}`
+  } else {
+    // Check if the account exists in the database
+    const found_account = await Account.findOne(
+      {username: request_body["username"], password: request_body["password"]}
+    );
+    if (found_account) {
+      // Log the user in, save their username in the session
+      ctx.session.user = found_account
+      ctx.body = `You are now logged in, ${ctx.session.user.username}`
+    } else {
+      // Could not find user, return error
+      ctx.throw(404, "Account not found.")
+    }
+  }
+});
+
+
+app
+  .use(router.routes())
+  .use(router.allowedMethods());
+
+if (!module.parent) {
+  createConnection().then(async connection => {
+    const port: number = 5000
+    const host: string = "localhost"
+    const NODE_ENV: string = "development"
+    const server = app.listen(port, host, () => {
+      console.log(
+        `Server is listening on ${host}:${port} (${NODE_ENV})`
+      );
+    });
+  }).catch(error => console.log("TypeORM connection error: ", error));
+}
+```
+The app now has the following features:
+1. Everything listed in the [sign-up system](#sign-up-v2).
+2. The user will now be recognized between logins via
+   [koa-session](https://github.com/koajs/session) and prevented from login.
+3. The user can only login with a username and password already registed in the
+   database.
+4. When logged in, the user object will be stored in their session for later
+   access.
+
+By default, sessions are managed in Koa using
+[cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies). When Koa
+receives a cookie, it performs a lookup to see if that session exists. If so, it
+collects all the data and stores it in the `ctx.session` object. Please refer to
+that webpage for more information about cookies and the [koa-session
+github](https://github.com/koajs/session) for more information about
+`koa-session`.

@@ -10,7 +10,7 @@ response = session.post(
 print(response.content)
 
 print("Logging in")
-esponse = session.post(
+response = session.post(
     "http://localhost:5000/login",
     json={"username": "test", "password": "test"}
 )

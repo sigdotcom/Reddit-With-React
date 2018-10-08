@@ -1,17 +1,23 @@
 {
-  "dependencies": {
-    "@koa/cors": "^2.2.2",
-    "@types/koa-cors": "^0.0.0",
-    "koa": "^2.5.3",
-    "koa-bodyparser": "^4.2.1",
-    "koa-logger": "^3.2.0",
-    "koa-router": "^7.4.0",
-    "koa-session": "^5.9.0"
-  },
   "devDependencies": {
     "@types/koa": "^2.0.46",
+    "@types/koa-bodyparser": "^5.0.1",
+    "@types/koa-cors": "^0.0.0",
+    "@types/koa-router": "^7.0.32",
+    "@types/koa-session": "^5.7.4",
     "ts-node": "^7.0.1",
     "tslint": "^5.11.0",
-    "typescript": "^3.0.3"
+    "typescript": "^3.1.1"
+  },
+  "dependencies": {
+    "@koa/cors": "^2.2.2",
+    "koa": "^2.5.3",
+    "koa-bodyparser": "^4.2.1",
+    "koa-cors": "^0.0.16",
+    "koa-logger": "^3.2.0",
+    "koa-router": "^7.4.0",
+    "koa-session": "^5.9.0",
+    "pg": "^7.4.3",
+    "typeorm": "^0.2.7"
   }
 }
