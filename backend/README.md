@@ -42,6 +42,7 @@ data on disk that persists even when the computer hosting the database restarts.
     2. [Entities](#entities)
     3. [Sign-up V2](#sign-up-v2)
     4. [Login V2](#login-v2)
+    5. [Project](#project)
 
 ## Setting up the Project
 1. Make sure you have the
@@ -52,6 +53,10 @@ data on disk that persists even when the computer hosting the database restarts.
    step, replace all subsequent yarn commands with their npm equivalents.
 3. Download [docker](https://www.docker.com/). A more in-depth discussion of
    what docker is will occur in a later section. Just trust for now.
+4. Ensure that you have [virtualization
+   enabled](https://www.howtogeek.com/213795/how-to-enable-intel-vt-x-in-your-computers-bios-or-uefi-firmware/).
+   Restart your computer, go into the BIOS, and enable something along the lines
+   of "virtualization", "intel VT", or "AMD-v"
 ### REST Clients
 Throughout this tutorial, I will be making reference to "making a GET/POST
 request" which is normally difficult to do on Windows. There are GUI REST
@@ -101,7 +106,6 @@ yarn add koa koa-router koa-bodyparser koa-session koa-cors koa-logger @koa/cors
 ```bash
 yarn add --dev @types/koa @types/koa-router @types/koa-bodyparser @types/koa-session @types/koa-cors ts-node tslint typescript
 ```
-5. TODO: add download for package.json and tslint
 
 ### The Application
 The bread and butter of Koa is its application object. From the official
@@ -686,6 +690,21 @@ Now we will set up the Reddit with React backend with Typescript.
     Server is listening on localhost:5000 (development)  # <-- You should see
     ```
 
+**NOTE**: ``docker run`` creates a container with the name specified after the
+``--name <name>`` flag (where ``<name>`` is the name of the container). After
+running this command once, you do **NOT** need to run it again when starting a
+container unless you explicitly remove the container using ``docker rm
+<name>`` command. If the database is not up or you receive the error 
+```
+docker: Error response from daemon: Conflict. The container name "/<name>" is
+already in use by container
+"<some hash>". You have to
+remove (or rename) that container to be able to reuse that name.  See 'docker
+run --help'.
+```
+use ``docker start <name>`` instead. This will start the already existing
+container instead of creating a new one with the same name.
+
 ### Entities
 Both the database and the backend server are setup, but we aren't storing
 anything in the database. ``createConnection()`` only creates a connection to
@@ -707,10 +726,10 @@ Follow the below steps to create an entity to store the Reddit with React user:
    in PostgreSQL so we must use `Account`):
 
     ```typescript
-    import {Entity, PrimaryColumn, Column} from "typeorm";
+    import {BaseEntity, Entity, PrimaryColumn, Column} from "typeorm";
 
     @Entity()
-    export class Account {
+    export class Account extends BaseEntity {
         @PrimaryColumn()
         username: string;
 
@@ -920,3 +939,22 @@ collects all the data and stores it in the `ctx.session` object. Please refer to
 that webpage for more information about cookies and the [koa-session
 github](https://github.com/koajs/session) for more information about
 `koa-session`.
+
+### Project
+Now that you have learned the basic, let us put them to the test. Take the
+original ``app.ts`` and perform the following tasks:
+1. Create a `Post` entity that stores all information necessary to display a
+   post on Reddit.
+    - Header, description, karma, etc.
+    - The logged in user who created the post (an anonymous user **CANNOT**
+      create a Post on the website)
+2. Add a `/posts/` route:
+    + **GET**
+        - Returns all `Posts` that exists in the database.
+    + **POST**
+        - Adds a new `Post` entity to the database. Be sure to validate the
+          information in the `Post` matches your entity.
+
+**Helpful Links**:
+1. [typeorm documentation](http://typeorm.io/)
+2. [KoaJS documentation](https://koajs.com/)
