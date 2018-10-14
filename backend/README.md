@@ -51,8 +51,11 @@ data on disk that persists even when the computer hosting the database restarts.
    `backend/` for an example of what is come.
 2. (OPTIONAL) Download [yarn](https://yarnpkg.com/en/). If you do not do this
    step, replace all subsequent yarn commands with their npm equivalents.
-3. Download [docker](https://www.docker.com/). A more in-depth discussion of
-   what docker is will occur in a later section. Just trust for now.
+3. Download [docker](https://www.docker.com/). For Windows versions < Windows 10
+   Professional, you need [docker
+   toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/) A more
+   in-depth discussion of what docker is will occur in a later section. Just
+   trust for now.
 4. Ensure that you have [virtualization
    enabled](https://www.howtogeek.com/213795/how-to-enable-intel-vt-x-in-your-computers-bios-or-uefi-firmware/).
    Restart your computer, go into the BIOS, and enable something along the lines
